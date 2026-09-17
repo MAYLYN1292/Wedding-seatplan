@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Find Your Seat &middot; Amelyn &amp; John</title>
+<style>
+  :root {
+    --blue-deep: #3f5666;   /* headings on light cards */
+    --card: #fdfcf9;        /* warm ivory, reads clearly against the blue */
+    --cream: #f6f1e8;
+    --ink: #2e3a44;
+    --muted: #7d8b96;
+    --gold: #b08d57;
+    --sage: #6f8272;
+    --line: #e4e0d6;
+    --on-blue: #fdfcf9;     /* text sitting directly on the background */
+    --you: #c8452f;         /* "you are here" red on the seating map */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background:
+      radial-gradient(1100px 620px at 12% -10%, rgba(255,255,255,.40), transparent 62%),
+      radial-gradient(900px 560px at 92% 108%, rgba(255,255,255,.26), transparent 60%),
+      linear-gradient(170deg, #a7bcca 0%, #93aabb 52%, #89a2b5 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+
+    /* Clear the phone status bar / notch. Some in-app browsers (Messenger,
+       Instagram) draw the page under it, and env() is 0 where there's no
+       inset, so keep a solid fallback of its own. */
+    padding: calc(env(safe-area-inset-top, 0px) + 38px)
+             calc(env(safe-area-inset-right, 0px) + 18px)
+             calc(env(safe-area-inset-bottom, 0px) + 44px)
+             calc(env(safe-area-inset-left, 0px) + 18px);
+
+    /* Centre the content in the screen instead of stacking it at the top.
+       dvh keeps it stable when mobile browser chrome slides away. */
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* auto margins centre it, but unlike justify-content they never clip the
+     top once the results make the page taller than the screen. */
+  .wrap {
+    width: 100%; max-width: 620px; margin: auto;
+    position: relative; z-index: 1;
+  }
+
+  /* Decorative floral sprigs, drawn as SVG so the file stays self-contained. */
+  .corner {
+    position: fixed; width: clamp(140px, 33vw, 280px); height: auto;
+    color: #f7f2e9; opacity: .28; pointer-events: none; z-index: 0;
+  }
+  .corner.tl { top: -12px; left: -20px; }
+  .corner.br { bottom: -12px; right: -20px; transform: rotate(180deg); }
+  .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  .occasion {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(12px, 3.4vw, 15px);
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--cream); margin-bottom: 16px; line-height: 1.55;
+    text-shadow: 0 1px 2px rgba(46,58,68,.18);
+  }
+  .occasion .date {
+    display: block; margin-top: 5px;
+    font-size: clamp(10.5px, 2.9vw, 12px);
+    letter-spacing: .08em; text-transform: none;
+    color: rgba(253,252,249,.78);
+  }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400; font-size: clamp(30px, 8vw, 44px);
+    margin: 0 0 6px; line-height: 1.15; color: var(--on-blue);
+    text-shadow: 0 2px 6px rgba(46,58,68,.20);
+  }
+  .floral {
+    display: block; width: 190px; max-width: 62%; height: auto;
+    margin: 14px auto 12px; color: var(--cream); opacity: .92;
+  }
+  .tagline { color: rgba(253,252,249,.84); font-size: 15px; margin: 0; }
+
+  .search { position: relative; margin-bottom: 8px; }
+  #q {
+    width: 100%; padding: 17px 46px 17px 18px;
+    font-size: 17px; font-family: inherit; color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(47,43,40,.04);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  #q:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(176,141,87,.14);
+  }
+  #q::placeholder { color: #b8afa4; }
+  /* hide Safari/Chrome's own clear button so it doesn't sit under ours */
+  #q::-webkit-search-cancel-button, #q::-webkit-search-decoration {
+    -webkit-appearance: none; appearance: none;
+  }
+  #clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--muted);
+    font-size: 20px; line-height: 1; cursor: pointer; display: none;
+  }
+  #clear:hover { background: #f1ece3; color: var(--ink); }
+  .hint {
+    font-size: 13px; color: rgba(253,252,249,.74);
+    text-align: center; margin: 10px 0 24px;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid rgba(255,255,255,.7);
+    border-radius: 14px; padding: 22px;
+    box-shadow: 0 10px 26px rgba(46,58,68,.14);
+    margin-bottom: 12px;
+  }
+  .card .who {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px; margin-bottom: 4px; text-align: center;
+  }
+  .card-floral {
+    width: 132px; max-width: 50%; margin: 6px auto 16px;
+    color: var(--sage); opacity: .8;
+  }
+  .card .who small { display: block; font-family: inherit; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .assign { display: flex; gap: 14px; }
+  .box {
+    flex: 1; text-align: center; padding: 16px 10px;
+    background: var(--cream); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .box .lbl {
+    font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+  .box .val {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(20px, 5.6vw, 27px); line-height: 1.15; color: var(--blue-deep);
+  }
+  .box .val.seat { color: var(--gold); }
+
+  .mates { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 4px; }
+  .mates summary {
+    cursor: pointer; font-size: 14px; color: var(--blue-deep);
+    padding: 10px 0 6px; list-style: none;
+  }
+  .mates summary::-webkit-details-marker { display: none; }
+  /* non-breaking space: a plain trailing space in content gets collapsed */
+  .mates summary::before { content: "+\00a0"; color: var(--gold); }
+  .mates[open] summary::before { content: "\2212\00a0"; }
+  .mates ol { margin: 4px 0 6px; padding-left: 0; list-style: none; }
+  .mates li {
+    display: flex; gap: 10px; font-size: 14.5px;
+    padding: 6px 0; border-bottom: 1px dashed #efe9de;
+  }
+  .mates li:last-child { border-bottom: 0; }
+  .mates li .n { color: var(--muted); min-width: 24px; }
+  .mates li.me { font-weight: 600; }
+
+  .pick {
+    display: block; width: 100%; text-align: left;
+    background: var(--card); border: 1px solid rgba(255,255,255,.7);
+    border-radius: 11px; padding: 14px 16px; margin-bottom: 9px;
+    font-family: inherit; font-size: 16px; color: var(--ink); cursor: pointer;
+    box-shadow: 0 4px 14px rgba(46,58,68,.10);
+    transition: border-color .12s, background .12s, transform .12s;
+  }
+  .pick:hover, .pick:focus {
+    border-color: var(--gold); background: #fffdf9; outline: none;
+    transform: translateY(-1px);
+  }
+  .pick .meta { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .pick-head {
+    font-size: 13.5px; color: rgba(253,252,249,.9); margin: 0 0 10px;
+    text-align: center;
+  }
+
+  .empty {
+    text-align: center; padding: 26px 20px; color: var(--muted);
+    background: var(--card); border: 1px solid rgba(255,255,255,.7);
+    border-radius: 14px; box-shadow: 0 10px 26px rgba(46,58,68,.14);
+  }
+  .empty strong { display: block; color: var(--ink); font-size: 16px; margin-bottom: 6px; font-weight: 600; }
+
+  .browse { margin-top: 34px; border-top: 1px solid rgba(255,255,255,.35); padding-top: 8px; }
+  .browse > summary {
+    cursor: pointer; list-style: none; text-align: center;
+    font-size: 13.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(253,252,249,.9); padding: 14px 0;
+  }
+  #allTables:not(:empty) {
+    background: var(--card); border: 1px solid rgba(255,255,255,.7);
+    border-radius: 14px; padding: 4px 22px 22px;
+    box-shadow: 0 10px 26px rgba(46,58,68,.14);
+  }
+  .browse > summary::-webkit-details-marker { display: none; }
+  .browse h3 {
+    font-family: Georgia, "Times New Roman", serif; font-weight: 400;
+    font-size: 18px; margin: 22px 0 8px; color: var(--blue-deep);
+  }
+  .browse h3 span { font-family: inherit; font-size: 12px; color: var(--muted); }
+  .browse ol { margin: 0; padding-left: 0; list-style: none; }
+  .browse li { display: flex; gap: 10px; font-size: 14.5px; padding: 5px 0; border-bottom: 1px dashed #efe9de; }
+  .browse li .n { color: var(--muted); min-width: 24px; }
+
+  /* ---- seating map ---- */
+  .mapbtn {
+    display: block; width: 100%; margin-top: 14px; padding: 12px 14px;
+    font-family: inherit; font-size: 14.5px; color: var(--blue-deep);
+    background: var(--cream); border: 1px solid var(--line);
+    border-radius: 10px; cursor: pointer;
+  }
+  .mapbtn:hover, .mapbtn:focus {
+    border-color: var(--gold); background: #fffdf9; outline: none;
+  }
+  .mapbtn i {
+    display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--you); margin-right: 7px; vertical-align: -1px;
+  }
+
+  .mapcard {
+    background: var(--card); border: 1px solid rgba(255,255,255,.7);
+    border-radius: 14px; padding: 16px 16px 18px;
+    box-shadow: 0 10px 26px rgba(46,58,68,.14);
+  }
+  .maphead {
+    text-align: center; font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px; color: var(--blue-deep); margin: 2px 0 0;
+  }
+  .maphead small {
+    display: block; font-family: inherit; font-size: 12.5px;
+    color: var(--muted); margin-top: 4px;
+  }
+  .closeup { display: block; width: 100%; max-width: 340px; height: auto; margin: 4px auto 0; }
+  .maptools {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin: 12px 0 9px;
+  }
+  .legend { display: flex; gap: 11px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
+  .legend span { white-space: nowrap; }
+  .legend i {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    margin-right: 5px; vertical-align: -1px; border: 1px solid rgba(46,58,68,.14);
+  }
+  /* Swatch colours live here, not in style attributes, so the photo rule the
+     page adds at the bottom can override the "your seat" one. */
+  .legend .sw-tbl { background: #ece5d7; }
+  .legend .sw-mine { background: #6f8272; }
+  .legend .sw-you { background: var(--you); }
+  #zoom {
+    flex: none; padding: 8px 12px; font-family: inherit; font-size: 13px;
+    color: var(--blue-deep); background: var(--cream);
+    border: 1px solid var(--line); border-radius: 9px; cursor: pointer;
+  }
+  #zoom:hover { border-color: var(--gold); }
+  .mapscroll {
+    overflow: auto; max-height: 72vh; background: #fbf8f2;
+    border: 1px solid var(--line); border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  #plan { display: block; width: 100%; height: auto; }
+  /* Zoomed: the plan keeps its own size and the box scrolls, so seat numbers
+     stay readable on a phone instead of shrinking to nothing. */
+  .mapscroll.zoom #plan { width: 780px; max-width: none; }
+  .mapnote { font-size: 12.5px; color: var(--muted); text-align: center; margin: 10px 0 0; }
+  #mapPick:not(:empty) {
+    margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;
+  }
+  #mapPick h4 {
+    font-family: Georgia, "Times New Roman", serif; font-weight: 400;
+    font-size: 16px; margin: 2px 0 6px; color: var(--blue-deep); text-align: center;
+  }
+  #mapPick ol { margin: 0; padding-left: 0; list-style: none; }
+  #mapPick li {
+    display: flex; gap: 10px; font-size: 14.5px;
+    padding: 5px 0; border-bottom: 1px dashed #efe9de;
+  }
+  #mapPick li:last-child { border-bottom: 0; }
+  #mapPick li .n { color: var(--muted); min-width: 24px; }
+  #mapPick li.me { font-weight: 600; }
+
+  /* map graphics — shared by the full plan and the single-table close-up */
+  .mapsvg text { text-anchor: middle; font-family: inherit; }
+  .mapsvg .tbl { fill: #ece5d7; stroke: #d8cdb8; stroke-width: 1.2; }
+  .mapsvg .st { fill: #fdfcf9; stroke: #cfc4ae; stroke-width: 1.1; }
+  .mapsvg .sn { fill: #9a8f7c; font-size: 11px; }
+  .mapsvg .tn { fill: #6a6152; font-size: 11.5px; font-family: Georgia, "Times New Roman", serif; }
+  .mapsvg .tc { fill: #a89c86; font-size: 8.5px; }
+  .mapsvg .grp { cursor: pointer; }
+  .mapsvg .grp.dim { opacity: .48; }
+  /* after .dim, so a table you tapped comes back to full strength */
+  .mapsvg .grp.sel { opacity: 1; }
+  .mapsvg .grp.sel .tbl { stroke: var(--gold); stroke-width: 2.4; }
+  .mapsvg .grp.you .tbl { fill: var(--sage); stroke: #56685a; }
+  .mapsvg .grp.you .tn, .mapsvg .grp.you .tc { fill: #fff; }
+  /* Chair states are single classes in one cascade, so later simply wins and
+     there is no specificity fight when a new state is added. */
+  .mapsvg .st.mate { fill: #e2e8e1; stroke: #93a695; }
+  .mapsvg .st.you { fill: var(--you); stroke: #9d3320; stroke-width: 1.4; }
+  .mapsvg .sn.you { fill: #fff; font-weight: 700; }
+  /* With a photo the chair becomes a little portrait, so the number switches to
+     dark ink with a white outline to stay readable over it. */
+  .mapsvg .st.you.pic { fill: #fff; stroke: var(--gold); stroke-width: 1.8; }
+  .mapsvg .picfill { pointer-events: none; }
+  .mapsvg .sn.you.pic {
+    fill: #26313a; paint-order: stroke; stroke: #fff;
+    stroke-width: 2.6px; stroke-linejoin: round;
+  }
+  .closeup .sn.you.pic { stroke-width: 4.5px; }
+  .mapsvg .ring { fill: none; stroke: var(--you); stroke-width: 2; }
+  .mapsvg .ring.pic { stroke: var(--gold); }
+  .closeup .sn { font-size: 21px; }
+  .closeup .tn { font-size: 17px; }
+  .closeup .tc { font-size: 11px; }
+
+  footer {
+    text-align: center; margin-top: 40px; font-size: 12.5px;
+    color: rgba(253,252,249,.8); letter-spacing: .04em;
+  }
+  .reserved { color: var(--muted); font-style: italic; }
+  @media (max-width: 380px) { .assign { flex-direction: column; } }
+
+  /* A seating chart tends to get printed — drop the background and ink it dark. */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .corner, .search, .hint, #results { display: none; }
+    h1, .occasion, .occasion .date, .tagline, .browse > summary, footer { color: #2e3a44; text-shadow: none; }
+    .floral { color: var(--sage); }
+    .browse { border-top: 0; }
+    #allTables:not(:empty) { border: 0; box-shadow: none; padding: 0; }
+    .mapcard { border: 0; box-shadow: none; padding: 0; }
+    .mapscroll { overflow: visible; max-height: none; border: 0; background: none; }
+    .mapscroll.zoom #plan { width: 100%; }
+    .maptools, .mapnote { display: none; }
+    .browse h3 { page-break-after: avoid; }
+    .browse ol { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floral artwork, defined once and reused. Nothing here renders on its own. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- The couple's photo, used to mark the guest's own chair on the seating
+         map. objectBoundingBox units mean the one pattern fills a chair of any
+         size, from the little dots on the plan to the big close-up. -->
+    <pattern id="usPic" width="1" height="1" patternContentUnits="objectBoundingBox">
+      <image id="usPicImg" x="0" y="0" width="1" height="1"
+             preserveAspectRatio="xMidYMid slice" href="data:image/jpeg;base64,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"/>
+    </pattern>
+
+    <path id="lf" d="M0 0 C9 -8 24 -9 33 -3 C24 5 9 7 0 0 Z"/>
+    <g id="bloom" fill="currentColor">
+      <ellipse rx="4" ry="8" cy="-6"/>
+      <ellipse rx="4" ry="8" cy="-6" transform="rotate(72)"/>
+      <ellipse rx="4" ry="8" cy="-6" transform="rotate(144)"/>
+      <ellipse rx="4" ry="8" cy="-6" transform="rotate(216)"/>
+      <ellipse rx="4" ry="8" cy="-6" transform="rotate(288)"/>
+    </g>
+
+    <!-- Left half of the small divider; mirrored for the right half. -->
+    <g id="dsprig">
+      <path d="M99 17 C80 17.6 58 15.4 30 17" fill="none" stroke="currentColor"
+            stroke-width="1.2" stroke-linecap="round"/>
+      <g fill="currentColor" opacity=".72">
+        <use href="#lf" transform="translate(88 16.4) rotate(158) scale(.50)"/>
+        <use href="#lf" transform="translate(88 17.6) rotate(202) scale(.50)"/>
+        <use href="#lf" transform="translate(70 16.4) rotate(162) scale(.44)"/>
+        <use href="#lf" transform="translate(70 17.6) rotate(198) scale(.44)"/>
+        <use href="#lf" transform="translate(52 16.4) rotate(166) scale(.38)"/>
+        <use href="#lf" transform="translate(52 17.6) rotate(194) scale(.38)"/>
+      </g>
+    </g>
+    <g id="divider">
+      <use href="#dsprig"/>
+      <use href="#dsprig" transform="translate(220,0) scale(-1,1)"/>
+      <use href="#bloom" transform="translate(110 17) scale(.62)"/>
+      <circle cx="110" cy="17" r="2.1" fill="#b08d57"/>
+    </g>
+
+    <!-- Corner sprig: an arcing stem with leaves and three blossoms. -->
+    <g id="sprig">
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M-10 26 C46 34 92 66 118 112 C136 144 144 186 142 232"/>
+        <path d="M34 31 C40 16 54 6 72 5"/>
+        <path d="M97 83 C112 74 131 76 145 87"/>
+        <path d="M127 141 C145 139 161 147 171 162"/>
+      </g>
+      <g fill="currentColor" opacity=".6">
+        <use href="#lf" transform="translate(28 29) rotate(-54)"/>
+        <use href="#lf" transform="translate(43 37) rotate(30) scale(.9)"/>
+        <use href="#lf" transform="translate(73 55) rotate(-42) scale(1.05)"/>
+        <use href="#lf" transform="translate(87 70) rotate(36) scale(.85)"/>
+        <use href="#lf" transform="translate(109 99) rotate(-32)"/>
+        <use href="#lf" transform="translate(119 118) rotate(48) scale(.9)"/>
+        <use href="#lf" transform="translate(131 155) rotate(-24) scale(.95)"/>
+        <use href="#lf" transform="translate(137 178) rotate(54) scale(.8)"/>
+      </g>
+      <use href="#bloom" transform="translate(72 5) scale(1.15)"/>
+      <use href="#bloom" transform="translate(146 88) scale(.95)"/>
+      <use href="#bloom" transform="translate(172 163) scale(.8)"/>
+    </g>
+  </defs>
+</svg>
+
+<svg class="corner tl" viewBox="0 0 260 260" aria-hidden="true" focusable="false"><use href="#sprig"/></svg>
+<svg class="corner br" viewBox="0 0 260 260" aria-hidden="true" focusable="false"><use href="#sprig"/></svg>
+
+<div class="wrap">
+  <header>
+    <div class="occasion">
+      Amelyn &amp; John Bethany Wedding
+      <span class="date">(September 26, 2026)</span>
+    </div>
+    <h1>Find Your Seat</h1>
+    <svg class="floral" viewBox="0 0 220 34" aria-hidden="true" focusable="false"><use href="#divider"/></svg>
+    <p class="tagline">Type your name &mdash; first name, surname, or both.</p>
+  </header>
+
+  <div class="search">
+    <input id="q" type="search" autocomplete="off" autocapitalize="words"
+           spellcheck="false" placeholder="e.g. Maria, or Dela Cruz"
+           aria-label="Search for your name">
+    <button id="clear" type="button" aria-label="Clear search">&times;</button>
+  </div>
+  <p class="hint">Partial names and small typos are fine.</p>
+
+  <div id="results" aria-live="polite"></div>
+
+  <details class="browse" id="mapBox">
+    <summary>See the seating map</summary>
+    <div class="mapcard">
+      <div id="mapTop"></div>
+      <div class="maptools">
+        <div class="legend">
+          <span><i class="sw-tbl"></i>Table</span>
+          <span><i class="sw-mine"></i>Your table</span>
+          <span><i class="sw-you" id="youDot"></i>Your seat</span>
+        </div>
+        <button id="zoom" type="button">Zoom in</button>
+      </div>
+      <div class="mapscroll" id="mapScroll"></div>
+      <p class="mapnote">Tap any table to see who is sitting there.</p>
+      <div id="mapPick"></div>
+    </div>
+  </details>
+
+  <details class="browse">
+    <summary>View the full seating chart</summary>
+    <div id="allTables"></div>
+  </details>
+
+  <footer>With love, Amelyn &amp; John</footer>
+</div>
+
+<script>
+"use strict";
+
+var SEATING = [
+ {
+  "name": "Amelyn Canillas Salonga",
+  "table": "♥ Sweetheart",
+  "seat": 1
+ },
+ {
+  "name": "John Bethany Salonga",
+  "table": "♥ Sweetheart",
+  "seat": 2
+ },
+ {
+  "name": "Karen Joy Ibay",
+  "table": "Table 9",
+  "seat": 1
+ },
+ {
+  "name": "Reed Ibay",
+  "table": "Table 9",
+  "seat": 2
+ },
+ {
+  "name": "Alfredo Tegerero",
+  "table": "Table 9",
+  "seat": 3
+ },
+ {
+  "name": "Jewel Marie Tegerero",
+  "table": "Table 9",
+  "seat": 4
+ },
+ {
+  "name": "John Ryan Canillas",
+  "table": "Table 9",
+  "seat": 5
+ },
+ {
+  "name": "Jomel Canillas",
+  "table": "Table 9",
+  "seat": 6
+ },
+ {
+  "name": "Richard Ibay",
+  "table": "Table 9",
+  "seat": 7
+ },
+ {
+  "name": "Karrie Bryce Ibay",
+  "table": "Table 9",
+  "seat": 8
+ },
+ {
+  "name": "Marcia May De Guzman",
+  "table": "Table 11",
+  "seat": 1
+ },
+ {
+  "name": "James Patrick Canillas",
+  "table": "Table 11",
+  "seat": 2
+ },
+ {
+  "name": "Cherie Rose Baustista",
+  "table": "Table 11",
+  "seat": 3
+ },
+ {
+  "name": "Romyrose Bautista",
+  "table": "Table 11",
+  "seat": 4
+ },
+ {
+  "name": "Mary Anne Mabaga",
+  "table": "Table 11",
+  "seat": 5
+ },
+ {
+  "name": "Alvin Punzalan",
+  "table": "Table 11",
+  "seat": 6
+ },
+ {
+  "name": "Brien Punzalan",
+  "table": "Table 11",
+  "seat": 7
+ },
+ {
+  "name": "Karla Punzalan",
+  "table": "Table 11",
+  "seat": 8
+ },
+ {
+  "name": "Lida Cotaz",
+  "table": "Table 4",
+  "seat": 1
+ },
+ {
+  "name": "Kathleen Mendoza",
+  "table": "Table 4",
+  "seat": 2
+ },
+ {
+  "name": "Lawrence Manago",
+  "table": "Table 4",
+  "seat": 3
+ },
+ {
+  "name": "Leonard Reyes",
+  "table": "Table 4",
+  "seat": 4
+ },
+ {
+  "name": "Leonard Reyes Wife",
+  "table": "Table 4",
+  "seat": 5
+ },
+ {
+  "name": "Rodel Miron",
+  "table": "Table 4",
+  "seat": 6
+ },
+ {
+  "name": "Jhoy Miron",
+  "table": "Table 4",
+  "seat": 7
+ },
+ {
+  "name": "Yojann Miron",
+  "table": "Table 4",
+  "seat": 8
+ },
+ {
+  "name": "Manuel Linsangan",
+  "table": "Table 5",
+  "seat": 1
+ },
+ {
+  "name": "Sharmaine Linsangan",
+  "table": "Table 5",
+  "seat": 2
+ },
+ {
+  "name": "Ian Flores",
+  "table": "Table 5",
+  "seat": 3
+ },
+ {
+  "name": "Khate Muego",
+  "table": "Table 5",
+  "seat": 4
+ },
+ {
+  "name": "Christopher Paolo Agbay",
+  "table": "Table 5",
+  "seat": 5
+ },
+ {
+  "name": "Kathleen Jayne Agbay",
+  "table": "Table 5",
+  "seat": 6
+ },
+ {
+  "name": "Jethro James Bodoso",
+  "table": "Table 5",
+  "seat": 7
+ },
+ {
+  "name": "Arianne John Mariano",
+  "table": "Table 5",
+  "seat": 8
+ },
+ {
+  "name": "Manuel Canillas",
+  "table": "VIP Table 2",
+  "seat": 1
+ },
+ {
+  "name": "Amelita Canillas",
+  "table": "VIP Table 2",
+  "seat": 2
+ },
+ {
+  "name": "Dionisio Evangelista",
+  "table": "VIP Table 2",
+  "seat": 3
+ },
+ {
+  "name": "Liza Guadalupe",
+  "table": "VIP Table 2",
+  "seat": 4
+ },
+ {
+  "name": "Nema Valdeviezo",
+  "table": "VIP Table 2",
+  "seat": 5
+ },
+ {
+  "name": "Rina Remulta",
+  "table": "VIP Table 2",
+  "seat": 6
+ },
+ {
+  "name": "Pamela Canillas",
+  "table": "VIP Table 2",
+  "seat": 7
+ },
+ {
+  "name": "Anita Tegerero",
+  "table": "VIP Table 2",
+  "seat": 8
+ },
+ {
+  "name": "Elsie Fernandez",
+  "table": "VIP Table 2",
+  "seat": 9
+ },
+ {
+  "name": "Almario Gatdula",
+  "table": "VIP Table 2",
+  "seat": 10
+ },
+ {
+  "name": "Paul Noah Villacrusis",
+  "table": "VIP Table 2",
+  "seat": 11
+ },
+ {
+  "name": "Geraldine Villacrusis/Sofia Villacrusis",
+  "table": "VIP Table 2",
+  "seat": 12
+ },
+ {
+  "name": "Jovito Salonga",
+  "table": "VIP Table 1",
+  "seat": 1
+ },
+ {
+  "name": "Alicia Salonga",
+  "table": "VIP Table 1",
+  "seat": 2
+ },
+ {
+  "name": "Fernando Cabanela",
+  "table": "VIP Table 1",
+  "seat": 3
+ },
+ {
+  "name": "Arlene Lambino Cabanela",
+  "table": "VIP Table 1",
+  "seat": 4
+ },
+ {
+  "name": "Matthan Logronio",
+  "table": "VIP Table 1",
+  "seat": 5
+ },
+ {
+  "name": "Louiela Lorgonio",
+  "table": "VIP Table 1",
+  "seat": 6
+ },
+ {
+  "name": "Vicente Velasco",
+  "table": "VIP Table 1",
+  "seat": 7
+ },
+ {
+  "name": "Grace Velasco",
+  "table": "VIP Table 1",
+  "seat": 8
+ },
+ {
+  "name": "Nenita Panday",
+  "table": "VIP Table 1",
+  "seat": 9
+ },
+ {
+  "name": "Ven Panday",
+  "table": "VIP Table 1",
+  "seat": 10
+ },
+ {
+  "name": "Ross Lincoln Navarro Enriquez",
+  "table": "VIP Table 1",
+  "seat": 11
+ },
+ {
+  "name": "Jennylyn Enriquez",
+  "table": "VIP Table 1",
+  "seat": 12
+ },
+ {
+  "name": "Nida C Perez",
+  "table": "Table 1",
+  "seat": 1
+ },
+ {
+  "name": "Kristine Caile Jamet",
+  "table": "Table 1",
+  "seat": 2
+ },
+ {
+  "name": "Clive Perez",
+  "table": "Table 1",
+  "seat": 3
+ },
+ {
+  "name": "Jordan Perez",
+  "table": "Table 1",
+  "seat": 4
+ },
+ {
+  "name": "Sherly Jamet",
+  "table": "Table 1",
+  "seat": 5
+ },
+ {
+  "name": "Taylor John Jamet",
+  "table": "Table 1",
+  "seat": 6
+ },
+ {
+  "name": "George Ian Salonga",
+  "table": "Table 1",
+  "seat": 7
+ },
+ {
+  "name": "Charles Daniel Salonga",
+  "table": "Table 1",
+  "seat": 8
+ },
+ {
+  "name": "Hyacinth Canillas",
+  "table": "Table 10",
+  "seat": 1
+ },
+ {
+  "name": "Randy Canillas",
+  "table": "Table 10",
+  "seat": 2
+ },
+ {
+  "name": "Corazon Vilacrusis",
+  "table": "Table 10",
+  "seat": 3
+ },
+ {
+  "name": "Noel Villacrusis",
+  "table": "Table 10",
+  "seat": 4
+ },
+ {
+  "name": "Henz Fernandez",
+  "table": "Table 10",
+  "seat": 5
+ },
+ {
+  "name": "Dorothy Napalit",
+  "table": "Table 10",
+  "seat": 6
+ },
+ {
+  "name": "Josh Ezequiel Canillas",
+  "table": "Table 10",
+  "seat": 7
+ },
+ {
+  "name": "Jennifer Canillas",
+  "table": "Table 10",
+  "seat": 8
+ },
+ {
+  "name": "Cherry Mae Belotendos",
+  "table": "Table 14",
+  "seat": 1
+ },
+ {
+  "name": "GB Belotendos",
+  "table": "Table 14",
+  "seat": 2
+ },
+ {
+  "name": "Malu Albesa",
+  "table": "Table 14",
+  "seat": 3
+ },
+ {
+  "name": "Arnel Albesa",
+  "table": "Table 14",
+  "seat": 4
+ },
+ {
+  "name": "Ravi Albesa",
+  "table": "Table 14",
+  "seat": 5
+ },
+ {
+  "name": "Imee Baybay",
+  "table": "Table 14",
+  "seat": 6
+ },
+ {
+  "name": "Sebastian Baybay",
+  "table": "Table 14",
+  "seat": 7
+ },
+ {
+  "name": "Marlon Baybay",
+  "table": "Table 14",
+  "seat": 8
+ },
+ {
+  "name": "Catherine Vergel De Dios",
+  "table": "Table 13",
+  "seat": 1
+ },
+ {
+  "name": "Kenneth De Torres",
+  "table": "Table 13",
+  "seat": 2
+ },
+ {
+  "name": "Argel Gatdula",
+  "table": "Table 13",
+  "seat": 3
+ },
+ {
+  "name": "Almira Gatdula",
+  "table": "Table 13",
+  "seat": 4
+ },
+ {
+  "name": "Michelle Kasey Taneo",
+  "table": "Table 13",
+  "seat": 5
+ },
+ {
+  "name": "Rosemarie Borres",
+  "table": "Table 13",
+  "seat": 6
+ },
+ {
+  "name": "Mel Borres",
+  "table": "Table 13",
+  "seat": 7
+ },
+ {
+  "name": "Shayne Surla",
+  "table": "Table 13",
+  "seat": 8
+ },
+ {
+  "name": "Rizallie De Mesa",
+  "table": "Table 15",
+  "seat": 1
+ },
+ {
+  "name": "Rochelle Ravina",
+  "table": "Table 15",
+  "seat": 2
+ },
+ {
+  "name": "Abegail Santoyo",
+  "table": "Table 15",
+  "seat": 3
+ },
+ {
+  "name": "Leanna Mamorno",
+  "table": "Table 15",
+  "seat": 4
+ },
+ {
+  "name": "April Grace Mendevil",
+  "table": "Table 15",
+  "seat": 5
+ },
+ {
+  "name": "Cecille Villarosa",
+  "table": "Table 15",
+  "seat": 6
+ },
+ {
+  "name": "Deave Dalida",
+  "table": "Table 15",
+  "seat": 7
+ },
+ {
+  "name": "Amelia Dalida and Kenzo Dalida",
+  "table": "Table 15",
+  "seat": 8
+ },
+ {
+  "name": "Betty Ceno",
+  "table": "Table 7",
+  "seat": 1
+ },
+ {
+  "name": "Cheryl Puso",
+  "table": "Table 7",
+  "seat": 2
+ },
+ {
+  "name": "Ellen Jove",
+  "table": "Table 7",
+  "seat": 3
+ },
+ {
+  "name": "Glo Arangozo",
+  "table": "Table 7",
+  "seat": 4
+ },
+ {
+  "name": "Jamaica Arangozo",
+  "table": "Table 7",
+  "seat": 5
+ },
+ {
+  "name": "Danny Boy Bedio",
+  "table": "Table 7",
+  "seat": 6
+ },
+ {
+  "name": "Carmela Lingling",
+  "table": "Table 7",
+  "seat": 7
+ },
+ {
+  "name": "Dante Arsuga",
+  "table": "Table 7",
+  "seat": 8
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 1
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 2
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 3
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 4
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 5
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 6
+ },
+ {
+  "name": "(Reserved)",
+  "table": "Table 8",
+  "seat": 7
+ },
+ {
+  "name": "Jeorge Cabanela",
+  "table": "Table 3",
+  "seat": 1
+ },
+ {
+  "name": "Amie Cabanela",
+  "table": "Table 3",
+  "seat": 2
+ },
+ {
+  "name": "Patrick Cabanela",
+  "table": "Table 3",
+  "seat": 3
+ },
+ {
+  "name": "Perry Cabanela",
+  "table": "Table 3",
+  "seat": 4
+ },
+ {
+  "name": "Jayson Rivera",
+  "table": "Table 3",
+  "seat": 5
+ },
+ {
+  "name": "Kris Rivera",
+  "table": "Table 3",
+  "seat": 6
+ },
+ {
+  "name": "Fatima Rivera",
+  "table": "Table 3",
+  "seat": 7
+ },
+ {
+  "name": "Lizbeth Rivera",
+  "table": "Table 3",
+  "seat": 8
+ },
+ {
+  "name": "Katniss Rivera",
+  "table": "Table 3",
+  "seat": 9
+ },
+ {
+  "name": "Shayna Figueroa",
+  "table": "Table 12",
+  "seat": 1
+ },
+ {
+  "name": "Jovito Evangelista",
+  "table": "Table 12",
+  "seat": 2
+ },
+ {
+  "name": "Glenda Busayong",
+  "table": "Table 12",
+  "seat": 3
+ },
+ {
+  "name": "Richglen Busayong",
+  "table": "Table 12",
+  "seat": 4
+ },
+ {
+  "name": "John Paul Camerino",
+  "table": "Table 12",
+  "seat": 5
+ },
+ {
+  "name": "Buba Vilma",
+  "table": "Table 12",
+  "seat": 6
+ },
+ {
+  "name": "Daisy Lyn Dadios",
+  "table": "Table 12",
+  "seat": 7
+ },
+ {
+  "name": "Thristan Dayle Dadios",
+  "table": "Table 12",
+  "seat": 8
+ },
+ {
+  "name": "Angie Pitogo",
+  "table": "Table 16",
+  "seat": 1
+ },
+ {
+  "name": "Jason Sam Pitogo",
+  "table": "Table 16",
+  "seat": 2
+ },
+ {
+  "name": "Cris Noblefranca",
+  "table": "Table 16",
+  "seat": 3
+ },
+ {
+  "name": "Michael Ver Domingo",
+  "table": "Table 16",
+  "seat": 4
+ },
+ {
+  "name": "Imarie Marquito Odquin",
+  "table": "Table 16",
+  "seat": 5
+ },
+ {
+  "name": "RyanJay Gabarda",
+  "table": "Table 16",
+  "seat": 6
+ },
+ {
+  "name": "Edna Cabanela",
+  "table": "Table 2",
+  "seat": 1
+ },
+ {
+  "name": "Danny Cabanela",
+  "table": "Table 2",
+  "seat": 2
+ },
+ {
+  "name": "Eden Kay Osio",
+  "table": "Table 2",
+  "seat": 3
+ },
+ {
+  "name": "Hanz Kenji Osio",
+  "table": "Table 2",
+  "seat": 4
+ },
+ {
+  "name": "Angelique Ordono",
+  "table": "Table 2",
+  "seat": 5
+ },
+ {
+  "name": "Renato Cabanela",
+  "table": "Table 2",
+  "seat": 6
+ },
+ {
+  "name": "Edith Cabanela",
+  "table": "Table 2",
+  "seat": 7
+ },
+ {
+  "name": "Cristomar Vercede",
+  "table": "Table 6",
+  "seat": 1
+ },
+ {
+  "name": "Karen Otic Vercede",
+  "table": "Table 6",
+  "seat": 2
+ },
+ {
+  "name": "Althea Rain Vercede",
+  "table": "Table 6",
+  "seat": 3
+ },
+ {
+  "name": "Amarie Vercede",
+  "table": "Table 6",
+  "seat": 4
+ },
+ {
+  "name": "Christian Jason DeMcCutac",
+  "table": "Table 6",
+  "seat": 5
+ },
+ {
+  "name": "Joseph Pantino",
+  "table": "Table 6",
+  "seat": 6
+ },
+ {
+  "name": "Jike Parcon",
+  "table": "Table 6",
+  "seat": 7
+ }
+];
+
+/* ---------- normalization ---------- */
+function norm(s) {
+  return String(s)
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+function tokens(s) { return norm(s).split(" ").filter(Boolean); }
+
+/* Rows that are placeholders, not real people. */
+function isReserved(row) { return /^\(?reserved\)?$/i.test(row.name.trim()); }
+
+/* Some cells hold two people sharing one seat, e.g. "A /B" or "A and B".
+   Each person becomes its own searchable alias pointing at the same row. */
+function aliasesFor(name) {
+  var parts = name.split(/\s*\/\s*|\s+&\s+|\s+\band\b\s+/i)
+                  .map(function (p) { return p.trim(); })
+                  .filter(Boolean);
+  if (parts.length < 2) return [name.trim()];
+  parts.unshift(name.trim());          // keep the whole cell searchable too
+  return parts;
+}
+
+var INDEX = [];
+SEATING.forEach(function (row, i) {
+  row._i = i;
+  if (isReserved(row)) return;
+  aliasesFor(row.name).forEach(function (alias) {
+    INDEX.push({ row: row, alias: alias, n: norm(alias), t: tokens(alias) });
+  });
+});
+
+/* ---------- matching ---------- */
+/* True if b is a within one typo of a: one inserted, deleted or wrong letter,
+   or two neighbouring letters swapped ("ameyln" for "amelyn"). */
+function closeEnough(a, b) {
+  if (a === b) return true;
+  var la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+
+  var i = 0, min = Math.min(la, lb);
+  while (i < min && a.charAt(i) === b.charAt(i)) i++;   // skip the shared prefix
+  if (i === la && i === lb) return true;
+
+  if (la === lb) {
+    if (a.slice(i + 1) === b.slice(i + 1)) return true;              // wrong letter
+    return a.charAt(i) === b.charAt(i + 1) &&                        // swapped pair
+           a.charAt(i + 1) === b.charAt(i) &&
+           a.slice(i + 2) === b.slice(i + 2);
+  }
+  return la > lb ? a.slice(i + 1) === b.slice(i)                     // extra letter
+                 : b.slice(i + 1) === a.slice(i);                    // missing letter
+}
+
+/* Greedily pair each query token to a distinct name token.
+   Returns a score, or 0 if some query token found no home. */
+function scoreEntry(entry, qTokens, qNorm) {
+  if (entry.n === qNorm) return 1000;
+
+  var used = new Array(entry.t.length).fill(false);
+  var total = 0;
+
+  for (var a = 0; a < qTokens.length; a++) {
+    var qt = qTokens[a], best = 0, bestIdx = -1;
+    for (var b = 0; b < entry.t.length; b++) {
+      if (used[b]) continue;
+      var nt = entry.t[b], s = 0;
+      if (nt === qt) s = 100;
+      else if (nt.indexOf(qt) === 0) s = 80;
+      else if (qt.length >= 3 && nt.indexOf(qt) > 0) s = 55;
+      else if (qt.length >= 4 && closeEnough(nt, qt)) s = 45;
+      if (s > best) { best = s; bestIdx = b; }
+    }
+    if (!best) return 0;                       // every query token must match
+    if (bestIdx === 0) best += 12;             // matching the first name ranks higher
+    used[bestIdx] = true;
+    total += best;
+  }
+  total -= (entry.t.length - qTokens.length);   // prefer tighter names
+  return total;
+}
+
+function search(query) {
+  var qNorm = norm(query);
+  if (qNorm.length < 2) return [];
+  var qTokens = qNorm.split(" ").filter(Boolean);
+
+  var hits = [], seen = {};
+  INDEX.forEach(function (entry) {
+    var s = scoreEntry(entry, qTokens, qNorm);
+    if (!s) return;
+    var key = entry.row._i;
+    if (seen[key] === undefined) { seen[key] = hits.length; hits.push({ entry: entry, score: s }); }
+    else if (hits[seen[key]].score < s) { hits[seen[key]] = { entry: entry, score: s }; }
+  });
+
+  hits.sort(function (x, y) {
+    return y.score - x.score || x.entry.alias.localeCompare(y.entry.alias);
+  });
+  // Generous cap: a single surname can cover a whole extended family
+  // (there are 15 Cabanelas), and truncating hides people from themselves.
+  return hits.slice(0, 40);
+}
+
+/* ---------- table helpers ---------- */
+function tableOrder(name) {
+  // "Couple Table", or "♥ Sweetheart" as My Table Plan exports it.
+  if (/couple|sweetheart/i.test(name)) return [0, 0];
+  var vip = name.match(/^vip\D*(\d+)/i);
+  if (vip) return [1, +vip[1]];
+  var t = name.match(/(\d+)/);
+  return [2, t ? +t[1] : 999];
+}
+function tableMembers(table) {
+  return SEATING.filter(function (r) { return r.table === table; })
+    .slice()
+    .sort(function (a, b) { return (a.seat || 0) - (b.seat || 0); });
+}
+/* Every table once, in the order they should be listed: couple, VIPs, then 1..n. */
+function tableNames() {
+  var names = [];
+  SEATING.forEach(function (r) { if (names.indexOf(r.table) < 0) names.push(r.table); });
+  return names.sort(function (a, b) {
+    var x = tableOrder(a), y = tableOrder(b);
+    return x[0] - y[0] || x[1] - y[1] || a.localeCompare(b);
+  });
+}
+
+/* ---------- rendering ---------- */
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+function renderCard(row, alias) {
+  var mates = tableMembers(row.table);
+  var items = mates.map(function (m) {
+    var label = isReserved(m)
+      ? '<span class="reserved">Reserved</span>'
+      : esc(m.name);
+    return '<li class="' + (m._i === row._i ? "me" : "") + '">' +
+             '<span class="n">' + (m.seat == null ? "&mdash;" : m.seat) + '</span>' +
+             '<span>' + label + '</span>' +
+           '</li>';
+  }).join("");
+
+  // A cell holding two names is one seat shared between them (e.g. a parent
+  // and a baby), so say who it is shared with rather than dumping the cell.
+  var parts = aliasesFor(row.name);
+  var sub = "";
+  if (alias && norm(alias) !== norm(row.name)) {
+    var others = parts.slice(1).filter(function (p) { return norm(p) !== norm(alias); });
+    sub = others.length
+      ? "<small>Sharing this seat with " + esc(others.join(" & ")) + "</small>"
+      : "<small>Listed as &ldquo;" + esc(row.name) + "&rdquo;</small>";
+  }
+
+  return '<div class="card">' +
+      '<div class="who">' + esc(alias || row.name) + sub + '</div>' +
+      '<svg class="floral card-floral" viewBox="0 0 220 34" aria-hidden="true" focusable="false">' +
+        '<use href="#divider"></use></svg>' +
+      '<div class="assign">' +
+        '<div class="box"><div class="lbl">Table</div><div class="val">' + esc(row.table) + '</div></div>' +
+        '<div class="box"><div class="lbl">Seat</div><div class="val seat">' +
+          (row.seat == null ? "&mdash;" : row.seat) + '</div></div>' +
+      '</div>' +
+      '<details class="mates"><summary>Who else is at ' + esc(row.table) +
+        ' (' + mates.length + ')</summary><ol>' + items + '</ol></details>' +
+      '<button class="mapbtn" type="button" data-row="' + row._i +
+        '" data-alias="' + esc(alias || row.name) + '">' +
+        '<i></i>Show me on the seating map</button>' +
+    '</div>';
+}
+
+function renderPicker(hits) {
+  var html = '<p class="pick-head">' + hits.length +
+             ' names match &mdash; choose yours:</p>';
+  hits.forEach(function (h, i) {
+    var r = h.entry.row;
+    html += '<button class="pick" type="button" data-i="' + i + '">' + esc(h.entry.alias) +
+            '<span class="meta">' + esc(r.table) +
+            (r.seat == null ? "" : " &middot; Seat " + r.seat) + '</span></button>';
+  });
+  return html;
+}
+
+var lastHits = [];
+
+function render(query) {
+  var box = document.getElementById("results");
+  if (norm(query).length < 2) { box.innerHTML = ""; return; }
+
+  lastHits = search(query);
+
+  if (!lastHits.length) {
+    box.innerHTML = '<div class="empty"><strong>We couldn’t find that name.</strong>' +
+      'Try just your first name or just your surname, or check the full chart below. ' +
+      'Still stuck? Please ask someone at the welcome table.</div>';
+    return;
+  }
+
+  // One clear winner: show the seat straight away.
+  if (lastHits.length === 1 || lastHits[0].score >= lastHits[1].score + 40) {
+    box.innerHTML = renderCard(lastHits[0].entry.row, lastHits[0].entry.alias);
+    return;
+  }
+
+  box.innerHTML = renderPicker(lastHits);
+  box.querySelectorAll(".pick").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var h = lastHits[+btn.dataset.i];
+      box.innerHTML = renderCard(h.entry.row, h.entry.alias);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+}
+
+function renderAllTables() {
+  document.getElementById("allTables").innerHTML = tableNames().map(function (t) {
+    var members = tableMembers(t);
+    var lis = members.map(function (m) {
+      return '<li><span class="n">' + (m.seat == null ? "&mdash;" : m.seat) + '</span><span>' +
+             (isReserved(m) ? '<span class="reserved">Reserved</span>' : esc(m.name)) +
+             '</span></li>';
+    }).join("");
+    return '<h3>' + esc(t) + ' <span>&middot; ' + members.length + ' seats</span></h3><ol>' + lis + '</ol>';
+  }).join("");
+}
+
+/* ---------- seating map ---------- */
+/* Table positions traced from the printed floor plan, so the map on screen
+   matches the room. Keys are norm()ed names, which is how "♥ Sweetheart" and
+   any capitalisation both find their spot. An entry with w/h is a long
+   rectangular table; everything else is a round one.
+
+   A table missing from this list is still drawn, in a row underneath the plan,
+   so adding a table to the guest list can never make it vanish from the map. */
+var PLAN = {
+  "sweetheart":  { x: 347, y:  80, w: 78, h: 32 },
+  "vip table 2": { x: 287, y: 192, w: 32, h: 156 },
+  "vip table 1": { x: 409, y: 192, w: 32, h: 156 },
+  "table 9":  { x: 170, y: 152 },
+  "table 1":  { x: 528, y: 152 },
+  "table 10": { x:  78, y: 246 },
+  "table 2":  { x: 616, y: 242 },
+  "table 11": { x: 193, y: 314 },
+  "table 3":  { x: 500, y: 322 },
+  "table 12": { x:  76, y: 383 },
+  "table 4":  { x: 616, y: 375 },
+  "table 13": { x: 205, y: 449 },
+  "table 5":  { x: 490, y: 443 },
+  "table 14": { x:  78, y: 515 },
+  "table 6":  { x: 616, y: 509 },
+  "table 15": { x: 200, y: 586 },
+  "table 7":  { x: 490, y: 581 },
+  "table 16": { x:  78, y: 649 },
+  "table 8":  { x: 605, y: 646 }
+};
+var PLAN_W = 700, PLAN_H = 730;
+var R_TBL = 26, R_SEAT = 12, SEAT_GAP = 6, RING_MAX = 2.1;
+
+/* The couple's photo is baked into the page by build.py. Without one the map
+   falls back to a plain red chair, so the page still works on its own. */
+var picImg = document.getElementById("usPicImg");
+var PHOTO = (picImg && picImg.getAttribute("href")) || "";
+var HAS_PHOTO = PHOTO.slice(0, 5) === "data:";
+var PHOTO_FADE = 0.72;   /* faded this far so the seat number reads through it */
+
+/* Round tables need a wider ring of chairs as they get busier. */
+function orbit(n) { return Math.max(48, 4.7 * n); }
+
+/* Where seat number `i` of `n` sits, in plan units, at scale k. */
+function seatXY(cfg, i, n, k) {
+  var rs = R_SEAT * k, gap = SEAT_GAP * k;
+  if (cfg.w && cfg.w > cfg.h) {          // sweetheart: both seats in front
+    var step = cfg.w / n;
+    return { x: cfg.x - cfg.w / 2 + step * (i + 0.5), y: cfg.y - cfg.h / 2 - gap - rs };
+  }
+  if (cfg.w) {                           // long table: a column down each side
+    var half = Math.ceil(n / 2);
+    var right = i < half, m = right ? half : n - half, j = right ? i : i - half;
+    return { x: cfg.x + (right ? 1 : -1) * (cfg.w / 2 + gap + rs),
+             y: cfg.y - cfg.h / 2 + (cfg.h / m) * (j + 0.5) };
+  }
+  var a = (-90 + (i * 360) / n) * Math.PI / 180, r = orbit(n) * k;
+  return { x: cfg.x + r * Math.cos(a), y: cfg.y + r * Math.sin(a) };
+}
+
+/* Half the room a table and its chairs take up, unscaled. `dy` is how far the
+   middle of that sits above the table itself — the sweetheart table has chairs
+   on one side only, so it needs nudging down to look centred. */
+function extent(cfg, n) {
+  if (!cfg.w) { var r = orbit(n) + R_SEAT; return { hw: r, hh: r, dy: 0 }; }
+  var out = R_SEAT * 2 + SEAT_GAP;
+  return cfg.w > cfg.h
+    ? { hw: cfg.w / 2, hh: cfg.h / 2 + out / 2, dy: -out / 2 }
+    : { hw: cfg.w / 2 + out, hh: cfg.h / 2, dy: 0 };
+}
+
+function tableGroup(t, cfg, k, state) {
+  var members = tableMembers(t), n = members.length || 1;
+  var mine = state.you && state.you.table === t;
+  var cls = "grp" + (mine ? " you" : state.you ? " dim" : "") +
+            (state.sel === t ? " sel" : "");
+  var g = '<g class="' + cls + '" data-table="' + esc(t) + '" tabindex="0" role="button"' +
+          ' aria-label="' + esc(t) + ', ' + n + ' seats">';
+
+  if (cfg.w) {
+    g += '<rect class="tbl" x="' + (cfg.x - cfg.w / 2) + '" y="' + (cfg.y - cfg.h / 2) +
+         '" width="' + cfg.w + '" height="' + cfg.h + '" rx="' + 7 * k + '"/>';
+  } else {
+    g += '<circle class="tbl" cx="' + cfg.x + '" cy="' + cfg.y + '" r="' + R_TBL * k + '"/>';
+  }
+
+  members.forEach(function (m, i) {
+    var p = seatXY(cfg, i, n, k);
+    var you = mine && m._i === state.you.i;
+    var pic = you && HAS_PHOTO ? " pic" : "";
+    var x = p.x.toFixed(1), y = p.y.toFixed(1), r = (R_SEAT * k).toFixed(1);
+
+    g += '<circle class="st' + (you ? " you" + pic : mine ? " mate" : "") +
+         '" cx="' + x + '" cy="' + y + '" r="' + r + '"/>';
+    if (pic) {
+      // The photo goes over a white chair at part opacity, which lightens it
+      // enough for the seat number to stay readable on top.
+      g += '<circle class="picfill" cx="' + x + '" cy="' + y + '" r="' + r +
+           '" fill="url(#usPic)" opacity="' + PHOTO_FADE + '"/>';
+    }
+    if (you) {
+      // A quiet pulse so the eye lands on the right chair straight away.
+      var r1 = (R_SEAT * k * RING_MAX).toFixed(1);
+      g += '<circle class="ring' + pic + '" cx="' + x + '" cy="' + y + '" r="' + r + '">' +
+           '<animate attributeName="r" values="' + r + ";" + r1 +
+             '" dur="1.9s" repeatCount="indefinite"/>' +
+           '<animate attributeName="opacity" values=".8;0" dur="1.9s" repeatCount="indefinite"/>' +
+           '</circle>';
+    }
+    if (m.seat != null) {
+      g += '<text class="sn' + (you ? " you" + pic : "") + '" x="' + x +
+           '" y="' + y + '" dominant-baseline="central">' + m.seat + '</text>';
+    }
+  });
+
+  // Long tables are taller than they are wide, so their name reads sideways.
+  var turn = cfg.w && cfg.h > cfg.w;
+  var lbl = '<g' + (turn ? ' transform="rotate(-90 ' + cfg.x + ' ' + cfg.y + ')"' : "") + '>' +
+            '<text class="tn" x="' + cfg.x + '" y="' + (cfg.y - 2 * k) +
+              '" dominant-baseline="central">' + esc(t) + '</text>' +
+            '<text class="tc" x="' + cfg.x + '" y="' + (cfg.y + 10 * k) +
+              '" dominant-baseline="central">' + n + ' seats</text></g>';
+  return g + lbl + '</g>';
+}
+
+/* Plan positions for every table in the guest list, inventing spots below the
+   floor plan for any table the traced layout doesn't know about. */
+function planLayout() {
+  var items = [], extra = 0, h = PLAN_H;
+  tableNames().forEach(function (t) {
+    var cfg = PLAN[norm(t)];
+    if (!cfg) {
+      cfg = { x: 105 + (extra % 4) * 165, y: PLAN_H + 90 + Math.floor(extra / 4) * 160 };
+      h = Math.max(h, cfg.y + 90);
+      extra++;
+    }
+    items.push({ table: t, cfg: cfg });
+  });
+  return { items: items, h: h };
+}
+
+function buildPlan(state) {
+  var L = planLayout();
+  var svg = '<svg id="plan" class="mapsvg" viewBox="0 0 ' + PLAN_W + " " + L.h +
+            '" role="img" aria-label="Reception floor plan">';
+  L.items.forEach(function (it) { svg += tableGroup(it.table, it.cfg, 1, state); });
+  return svg + "</svg>";
+}
+
+/* One table on its own, blown up big enough to read on a phone. */
+function buildCloseup(table, state) {
+  var W = 380, H = 330;
+  var base = PLAN[norm(table)] || {};
+  var n = tableMembers(table).length || 1;
+  var e = extent(base, n);
+  // Scale to fill the box, leaving room for the pulsing ring round the red seat.
+  var pad = (RING_MAX - 1) * R_SEAT;
+  var k = Math.min(W / 2 / (e.hw + pad), H / 2 / (e.hh + pad), 2.8);
+  var cfg = { x: W / 2, y: H / 2 - e.dy * k };
+  if (base.w) { cfg.w = base.w * k; cfg.h = base.h * k; }
+  return '<svg class="closeup mapsvg" viewBox="0 0 ' + W + " " + H +
+         '" role="img" aria-label="Close-up of ' + esc(table) + '">' +
+         tableGroup(table, cfg, k, state) + "</svg>";
+}
+
+var HL = null;   // the guest we are pointing at, if any
+var SEL = null;  // a table the guest tapped on the plan
+
+function mapState() { return { you: HL, sel: SEL }; }
+
+function renderMap() {
+  var st = mapState();
+  var top = document.getElementById("mapTop");
+  if (HL) {
+    top.innerHTML = '<p class="maphead">' + esc(HL.table) +
+        (HL.seat == null ? "" : " &middot; Seat " + HL.seat) +
+        "<small>" + esc(HL.who) + " &mdash; " + (HAS_PHOTO
+          ? "your chair is the one wearing our photo"
+          : "you are the red seat") + "</small></p>" +
+      buildCloseup(HL.table, st);
+  } else {
+    top.innerHTML = '<p class="maphead">The reception floor plan' +
+      "<small>Type your name above, then tap &ldquo;Show me on the seating map&rdquo;" +
+      " to light up your table and seat.</small></p>";
+  }
+
+  document.getElementById("mapScroll").innerHTML = buildPlan(st);
+
+  var pick = document.getElementById("mapPick");
+  if (!SEL) { pick.innerHTML = ""; return; }
+  var members = tableMembers(SEL);
+  pick.innerHTML = "<h4>" + esc(SEL) + "</h4><ol>" + members.map(function (m) {
+    return '<li class="' + (HL && m._i === HL.i ? "me" : "") + '">' +
+      '<span class="n">' + (m.seat == null ? "&mdash;" : m.seat) + "</span><span>" +
+      (isReserved(m) ? '<span class="reserved">Reserved</span>' : esc(m.name)) +
+      "</span></li>";
+  }).join("") + "</ol>";
+}
+
+/* Slide the scroll box so the highlighted table is in the middle of it. */
+function centerMap() {
+  var host = document.getElementById("mapScroll");
+  var g = host.querySelector(".grp.you") || host.querySelector(".grp.sel");
+  var svg = host.querySelector("#plan");
+  if (!g || !svg) return;
+  try {
+    var b = g.getBBox();
+    var k = svg.getBoundingClientRect().width / PLAN_W;
+    host.scrollLeft = (b.x + b.width / 2) * k - host.clientWidth / 2;
+    host.scrollTop = (b.y + b.height / 2) * k - host.clientHeight / 2;
+  } catch (e) { /* not laid out yet — nothing to centre */ }
+}
+
+function setZoom(on) {
+  var host = document.getElementById("mapScroll");
+  host.classList.toggle("zoom", on);
+  document.getElementById("zoom").textContent = on ? "Zoom out" : "Zoom in";
+  centerMap();
+}
+
+function showOnMap(row, alias) {
+  HL = { table: row.table, i: row._i, seat: row.seat, who: alias || row.name };
+  SEL = row.table;
+  renderMap();
+  document.getElementById("mapBox").open = true;
+  // On a phone the whole plan at once is too small to read, so zoom straight in
+  // on their table; on a laptop the fitted plan is already legible.
+  setZoom(window.innerWidth < 620);
+  scrollToMap();
+}
+
+/* Bring the map into view. scrollIntoView with options is ignored by some
+   in-app browsers, so work out the offset and scroll the window itself,
+   smoothly only where that is actually supported. */
+function scrollToMap() {
+  var box = document.getElementById("mapBox");
+  function here() { return window.pageYOffset || document.documentElement.scrollTop || 0; }
+  function target() { return box.getBoundingClientRect().top + here() - 10; }
+
+  var from = here();
+  if (Math.abs(target() - from) < 4) return;
+  if (!("scrollBehavior" in document.documentElement.style)) {
+    window.scrollTo(0, target());
+    return;
+  }
+  window.scrollTo({ top: target(), behavior: "smooth" });
+  // Some in-app browsers take the call and quietly do nothing. If we haven't
+  // moved a moment later, jump there — a still page looks like a dead button.
+  setTimeout(function () {
+    if (Math.abs(here() - from) < 4) window.scrollTo(0, target());
+  }, 450);
+}
+
+/* ---------- wire up ---------- */
+var input = document.getElementById("q");
+var clearBtn = document.getElementById("clear");
+
+var resultsBox = document.getElementById("results");
+var mapScroll = document.getElementById("mapScroll");
+
+input.addEventListener("input", function () {
+  clearBtn.style.display = input.value ? "block" : "none";
+  render(input.value);
+});
+clearBtn.addEventListener("click", function () {
+  input.value = "";
+  clearBtn.style.display = "none";
+  resultsBox.innerHTML = "";
+  HL = null;
+  SEL = null;
+  renderMap();
+  input.focus();
+});
+
+/* Delegated: the card is rebuilt on every keystroke, so listen on the box. */
+resultsBox.addEventListener("click", function (e) {
+  var btn = e.target.closest && e.target.closest(".mapbtn");
+  if (!btn) return;
+  showOnMap(SEATING[+btn.dataset.row], btn.dataset.alias);
+});
+
+function tapTable(el) {
+  SEL = el.getAttribute("data-table");
+  renderMap();
+}
+mapScroll.addEventListener("click", function (e) {
+  var g = e.target.closest && e.target.closest("[data-table]");
+  if (g) tapTable(g);
+});
+mapScroll.addEventListener("keydown", function (e) {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  var g = e.target.closest && e.target.closest("[data-table]");
+  if (g) { e.preventDefault(); tapTable(g); }
+});
+document.getElementById("zoom").addEventListener("click", function () {
+  setZoom(!mapScroll.classList.contains("zoom"));
+});
+
+/* Match the little dots in the legend and on the button to the chair marker.
+   Written at runtime because the photo only exists as a data URI in the SVG. */
+if (HAS_PHOTO) {
+  var css = document.createElement("style");
+  css.textContent =
+    "#youDot, .mapbtn i { background: #fff url('" + PHOTO + "') center/cover no-repeat;" +
+    " box-shadow: inset 0 0 0 1px rgba(176,141,87,.85); }" +
+    ".mapbtn i { width: 14px; height: 14px; vertical-align: -3px; }";
+  document.head.appendChild(css);
+}
+
+renderMap();
+renderAllTables();
+</script>
+</body>
+</html>
