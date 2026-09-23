@@ -269,7 +269,7 @@
   #plan { display: block; width: 100%; height: auto; }
   /* Zoomed: the plan keeps its own size and the box scrolls, so seat numbers
      stay readable on a phone instead of shrinking to nothing. */
-  .mapscroll.zoom #plan { width: 780px; max-width: none; }
+  .mapscroll.zoom #plan { width: 1650px; max-width: none; }
   .mapnote { font-size: 12.5px; color: var(--muted); text-align: center; margin: 10px 0 0; }
   #mapPick:not(:empty) {
     margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;
@@ -318,6 +318,16 @@
   .mapsvg .ring { fill: none; stroke: var(--you); stroke-width: 2; }
   .mapsvg .ring.pic { stroke: var(--gold); }
   .closeup .sn { font-size: 21px; }
+  /* venue decorations on the full plan — stage, projector, buffet, carpet etc. */
+  .mapsvg .venue-box { fill: #ece5d7; stroke: #d8cdb8; stroke-width: 1.1; }
+  .mapsvg .venue-label { fill: #6a6152; font-size: 11px; letter-spacing: .3px; }
+  .mapsvg .buffet-box { fill: var(--sage); stroke: #56685a; }
+  .mapsvg .buffet-label { fill: #fff; font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+  .mapsvg .carpet-line { stroke: var(--you); stroke-width: 1.4; stroke-dasharray: 3 5; opacity: .55; }
+  .mapsvg .carpet-label, .mapsvg .stairs-label, .mapsvg .entrance-label {
+    fill: #9a8f7c; font-size: 10px; letter-spacing: 2px;
+  }
+  .mapsvg .stairs-path { fill: none; stroke: #b08d57; stroke-width: 1.3; }
   .closeup .tn { font-size: 17px; }
   .closeup .tc { font-size: 11px; }
 
@@ -497,12 +507,12 @@ var SEATING = [
   "seat": 4
  },
  {
-  "name": "John Ryan Canillas",
+  "name": "Ma. Ysabella Tegerero",
   "table": "Table 9",
   "seat": 5
  },
  {
-  "name": "Jomel Canillas",
+  "name": "John Ryan Canillas",
   "table": "Table 9",
   "seat": 6
  },
@@ -857,7 +867,7 @@ var SEATING = [
   "seat": 5
  },
  {
-  "name": "Cecille Villarosa",
+  "name": "Arlyn Laurista Betancur",
   "table": "Table 14",
   "seat": 6
  },
@@ -932,22 +942,22 @@ var SEATING = [
   "seat": 4
  },
  {
-  "name": "Jonah Delgado",
+  "name": "Marvin Dalusong",
   "table": "Table 15",
   "seat": 5
  },
  {
-  "name": "Zeke Rhys Ignacio",
+  "name": "Leanna Mamorno",
   "table": "Table 15",
   "seat": 6
  },
  {
-  "name": "Leanna Mamorno",
+  "name": "Joel Casaje",
   "table": "Table 15",
   "seat": 7
  },
  {
-  "name": "Joel Casaje",
+  "name": "(Reserved)",
   "table": "Table 15",
   "seat": 8
  },
@@ -992,27 +1002,27 @@ var SEATING = [
   "seat": 8
  },
  {
-  "name": "Renzi San Jose",
+  "name": "Rhonelyn Dadios",
   "table": "Table 8",
   "seat": 1
  },
  {
-  "name": "Joy San Jose",
+  "name": "Daisy Lyn Dadios",
   "table": "Table 8",
   "seat": 2
  },
  {
-  "name": "Homer Saldajeno",
+  "name": "Thristan Dadios",
   "table": "Table 8",
   "seat": 3
  },
  {
-  "name": "Richglen Busayong",
+  "name": "Jomel Canillas",
   "table": "Table 8",
   "seat": 4
  },
  {
-  "name": "(Reserved)",
+  "name": "Sharlene Lorena",
   "table": "Table 8",
   "seat": 5
  },
@@ -1077,7 +1087,7 @@ var SEATING = [
   "seat": 1
  },
  {
-  "name": "Jovito Evangelista",
+  "name": "Thess Contreras",
   "table": "Table 12",
   "seat": 2
  },
@@ -1097,17 +1107,17 @@ var SEATING = [
   "seat": 5
  },
  {
-  "name": "Rhonelyn Dadios",
+  "name": "Richglen Busayong",
   "table": "Table 12",
   "seat": 6
  },
  {
-  "name": "Daisy Lyn Dadios",
+  "name": "(Reserved)",
   "table": "Table 12",
   "seat": 7
  },
  {
-  "name": "Thristan Dayle Dadios",
+  "name": "(Reserved)",
   "table": "Table 12",
   "seat": 8
  },
@@ -1140,6 +1150,16 @@ var SEATING = [
   "name": "RyanJay Gabarda",
   "table": "Table 16",
   "seat": 6
+ },
+  {
+  "name": "Jonah Delgado",
+  "table": "Table 16",
+  "seat": 7
+ },
+  {
+  "name": "Zeke Rhys Ignacio",
+  "table": "Table 16",
+  "seat": 8
  },
  {
   "name": "Edna Cabanela",
@@ -1177,22 +1197,22 @@ var SEATING = [
   "seat": 7
  },
  {
-  "name": "Cristomar Vercede",
+  "name": "Amy Benitez",
   "table": "Table 6",
   "seat": 1
  },
  {
-  "name": "Karen Otic Vercede",
+  "name": "Arnel Benitez",
   "table": "Table 6",
   "seat": 2
  },
  {
-  "name": "Althea Rain Vercede",
+  "name": "Arnel Benitez Jr.",
   "table": "Table 6",
   "seat": 3
  },
  {
-  "name": "Amarie Vercede",
+  "name": "Joker Benitez",
   "table": "Table 6",
   "seat": 4
  },
@@ -1453,28 +1473,31 @@ function renderAllTables() {
    A table missing from this list is still drawn, in a row underneath the plan,
    so adding a table to the guest list can never make it vanish from the map. */
 var PLAN = {
-  "sweetheart":  { x: 347, y:  80, w: 78, h: 32 },
-  "vip table 2": { x: 287, y: 192, w: 32, h: 156 },
-  "vip table 1": { x: 409, y: 192, w: 32, h: 156 },
-  "table 9":  { x: 170, y: 152 },
-  "table 1":  { x: 528, y: 152 },
-  "table 10": { x:  78, y: 246 },
-  "table 2":  { x: 616, y: 242 },
-  "table 11": { x: 193, y: 314 },
-  "table 3":  { x: 500, y: 322 },
-  "table 12": { x:  76, y: 383 },
-  "table 4":  { x: 616, y: 375 },
-  "table 13": { x: 205, y: 449 },
-  "table 5":  { x: 490, y: 443 },
-  "table 14": { x:  78, y: 515 },
-  "table 6":  { x: 616, y: 509 },
-  "table 15": { x: 200, y: 586 },
-  "table 7":  { x: 490, y: 581 },
-  "table 16": { x:  78, y: 649 },
-  "table 8":  { x: 605, y: 646 }
+  "sweetheart":  { x: 846, y: 150, w: 98, h: 40 },
+  "vip table 1": { x: 1032, y: 339, w: 50, h: 222 },
+  "vip table 2": { x: 660, y: 339, w: 50, h: 222 },
+  /* left side: an informal cluster, traced from the reference layout */
+  "table 9":  { x: 400, y: 447 },
+  "table 10": { x: 230, y: 540 },
+  "table 11": { x: 495, y: 600 },
+  "table 12": { x: 140, y: 720 },
+  "table 13": { x: 350, y: 690 },
+  "table 14": { x: 622, y: 696 },
+  "table 15": { x: 496, y: 807 },
+  "table 16": { x: 318, y: 876 },
+  /* right side: a loose group beside VIP 2, then a tight partitioned grid,
+     traced from the reference layout */
+  "table 1":  { x: 1282, y: 320 },
+  "table 2":  { x: 1489, y: 320 },
+  "table 3":  { x: 1279, y: 485 },
+  "table 4":  { x: 1486, y: 485 },
+  "table 5":  { x: 1035, y: 660 },
+  "table 6":  { x: 1240, y: 660 },
+  "table 7":  { x: 1035, y: 830 },
+  "table 8":  { x: 1240, y: 830 }
 };
-var PLAN_W = 700, PLAN_H = 730;
-var R_TBL = 26, R_SEAT = 12, SEAT_GAP = 6, RING_MAX = 2.1;
+var PLAN_W = 1700, PLAN_H = 1250;
+var R_TBL = 33, R_SEAT = 16, SEAT_GAP = 8, RING_MAX = 2.1;
 
 /* The couple's photo is baked into the page by build.py. Without one the map
    falls back to a plain red chair, so the page still works on its own. */
@@ -1484,7 +1507,7 @@ var HAS_PHOTO = PHOTO.slice(0, 5) === "data:";
 var PHOTO_FADE = 0.72;   /* faded this far so the seat number reads through it */
 
 /* Round tables need a wider ring of chairs as they get busier. */
-function orbit(n) { return Math.max(48, 4.7 * n); }
+function orbit(n) { return Math.max(58, 4.7 * n); }
 
 /* Where seat number `i` of `n` sits, in plan units, at scale k. */
 function seatXY(cfg, i, n, k) {
@@ -1584,10 +1607,38 @@ function planLayout() {
   return { items: items, h: h };
 }
 
+/* Venue landmarks around the tables — stage, projector, carpet, buffet,
+   stairs, tech booth and the entrance — traced from the reference layout. */
+function planVenue() {
+  var cx = 846;
+  return '<rect class="venue-box" x="' + (cx - 150) + '" y="30" width="300" height="80" rx="12"/>' +
+    '<text class="venue-label" x="' + cx + '" y="70" dominant-baseline="central">Backdrop / Stage</text>' +
+
+    '<rect class="venue-box" x="80" y="70" width="150" height="45" rx="8"/>' +
+    '<text class="venue-label" x="155" y="92" dominant-baseline="central">Projector</text>' +
+
+    '<line class="carpet-line" x1="' + cx + '" y1="175" x2="' + cx + '" y2="1000"/>' +
+    '<text class="carpet-label" x="' + cx + '" y="585" transform="rotate(-90 ' + cx + ' 585)"' +
+      ' dominant-baseline="central">RED CARPET</text>' +
+
+    '<path class="stairs-path" d="M' + (cx - 45) + ' 1000 Q ' + cx + ' 1045, ' + (cx + 45) + ' 1000"/>' +
+    '<text class="stairs-label" x="' + (cx + 25) + '" y="1020" transform="rotate(-90 ' + (cx + 25) + ' 1020)"' +
+      ' dominant-baseline="central">STAIRS</text>' +
+
+    '<rect class="venue-box buffet-box" x="73" y="1091" width="381" height="102" rx="32"/>' +
+    '<text class="buffet-label" x="263" y="1142" dominant-baseline="central">BUFFET AREA</text>' +
+
+    '<rect class="venue-box" x="1263" y="1091" width="172" height="64" rx="8"/>' +
+    '<text class="venue-label" x="1349" y="1123" dominant-baseline="central">TECH BOOTH</text>' +
+
+    '<text class="entrance-label" x="1650" y="600" transform="rotate(-90 1650 600)"' +
+      ' dominant-baseline="central">MAIN ENTRANCE GUEST</text>';
+}
+
 function buildPlan(state) {
   var L = planLayout();
   var svg = '<svg id="plan" class="mapsvg" viewBox="0 0 ' + PLAN_W + " " + L.h +
-            '" role="img" aria-label="Reception floor plan">';
+            '" role="img" aria-label="Reception floor plan">' + planVenue();
   L.items.forEach(function (it) { svg += tableGroup(it.table, it.cfg, 1, state); });
   return svg + "</svg>";
 }
